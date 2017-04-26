@@ -1,6 +1,28 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const {CronJob} = require('cron');
+const sqlite3 = require('sqlite3');
+const promisify = require('es6-promisify');
+const path = require('path');
+
+const db = new sqlite3.Database(path.join(__dirname, '../data.db'));
+
+// テーブルの初期化
+(async () => {
+  await promisify(db.run, db)(`
+    CREATE TABLE IF NOT EXISTS mastodon_instances (
+      id INTEGER PRIMARY KEY NOT NULL,
+      instance TEXT NOT NULL,
+      score INTEGER DEFAULT 0 NOT NULL,
+      users INTEGER DEFAULT 0 NOT NULL,
+      statuses INTEGER DEFAULT 0 NOT NULL,
+      connections INTEGER DEFAULT 0 NOT NULL,
+      uptime TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+  await promisify(db.run, db)('CREATE INDEX IF NOT EXISTS idx_instance ON mastodon_instances (instance);');
+})();
 
 const getMastodonList = async () => {
   const res = await axios.get('https://instances.mastodon.xyz/list');
@@ -15,18 +37,44 @@ const getMastodonList = async () => {
   })).get();
 };
 
+const storeMastodonList = async (items) => {
+  for (const item of items) {
+    await promisify(db.run, db)(`
+      INSERT INTO mastodon_instances (
+        instance,
+        score,
+        users,
+        statuses,
+        connections,
+        uptime
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?
+      )
+    `, [
+      item.instance,
+      item.score,
+      item.users,
+      item.statuses,
+      item.connections,
+      item.uptime
+    ]);
+  }
+};
+
+const run = async () => {
+  const items = await getMastodonList();
+  await storeMastodonList(items.filter(item => item.users > 5000));
+};
+
 module.exports = robot => {
   robot.respond(/mstdn-stats/, () => {
     // TODO なんかしゃべらせたいね
   });
 
-  // TODO テスト用なので後で消す
-  getMastodonList();
-
   new CronJob({
     cronTime: '00 00 0,6,12,18 * * *',
     start   : true,
     timeZone: 'Asia/Tokyo',
-    onTick  : () => getMastodonList().catch(e => robot.logger.error(e.message))
+    onTick  : () => run().catch(e => robot.logger.error(e.message))
   });
 };
