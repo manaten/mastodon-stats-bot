@@ -6,7 +6,9 @@ const promisify = require('es6-promisify');
 const path = require('path');
 const _ = require('lodash');
 
-const db = new sqlite3.Database(path.join(__dirname, '../data.db'));
+const db = new sqlite3.Database(
+  process.env.SQLITE_PATH || path.join(__dirname, '../data.db')
+);
 
 // initialize table
 (async () => {
@@ -68,7 +70,7 @@ const run = async robot => {
     await storeMastodonList(items);
 
     const text = '```\ninstance  users  statuses\n' + items.map(i => `${i.instance}  ${i.users}  ${i.statuses}`).join('\n') + '\n```';
-    await robot.adapter.client.web.chat.postMessage('C0HN1A4NT', text, {as_user: true});
+    await robot.adapter.client.web.chat.postMessage(process.env.SLACK_CHANNEL, text, {as_user: true});
     robot.logger.info(`get ${items.length} items.`);
   } catch(e) {
     robot.logger.error(e.message);
