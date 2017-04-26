@@ -8,6 +8,8 @@
   "dependencies": {
     "axios": "^0.16.1",
     "cheerio": "^0.22.0",
+    "coffee-script": "^1.12.5",
+    "cron": "^1.2.1",
     "forever": "^0.15.3",
     "hubot": "^2.19.0",
     "hubot-slack": "^4.3.4"
@@ -19,7 +21,7 @@
     "pre-commit": "^1.2.2"
   },
   "scripts": {
-    "start": "forever hubot -a slack",
+    "start": "forever -c \"node ./node_modules/.bin/coffee\" ./node_modules/.bin/hubot -a slack",
     "lint:staged": "lint-staged"
   },
   "eslintConfig": {
