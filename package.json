@@ -1,0 +1,72 @@
+{
+  "name": "mastodon-stats-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "ssh://git@github.com/manaten/mastodon-stats-bot.git",
+  "author": "manaten <manaten@manaten.net> (http://manaten.net)",
+  "license": "MIT",
+  "engines": {
+    "node": ">= 7.6.0"
+  },
+  "dependencies": {
+    "axios": "^0.16.1",
+    "cheerio": "^0.22.0",
+    "coffee-script": "^1.12.5",
+    "cron": "^1.2.1",
+    "es6-promisify": "^5.0.0",
+    "forever": "^0.15.3",
+    "hubot": "^2.19.0",
+    "hubot-slack": "^4.3.4",
+    "lodash": "^4.17.4",
+    "sqlite3": "^3.1.8"
+  },
+  "devDependencies": {
+    "editorconfig-tools": "^0.1.1",
+    "eslint": "^3.19.0",
+    "lint-staged": "^3.4.0",
+    "pre-commit": "^1.2.2"
+  },
+  "scripts": {
+    "start": "forever -c \"node ./node_modules/.bin/coffee\" ./node_modules/.bin/hubot -a slack",
+    "lint:staged": "lint-staged"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 8
+    },
+    "rules": {
+      "indent": [
+        2,
+        2
+      ],
+      "quotes": [
+        2,
+        "single"
+      ],
+      "linebreak-style": [
+        2,
+        "unix"
+      ],
+      "semi": [
+        2,
+        "always"
+      ]
+    },
+    "env": {
+      "es6": true,
+      "node": true
+    },
+    "extends": "eslint:recommended"
+  },
+  "pre-commit": "lint:staged",
+  "lint-staged": {
+    "*.{cmd,html,json,md,sh,txt,xml,yml}": [
+      "editorconfig-tools fix",
+      "git add"
+    ],
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "git add"
+    ]
+  }
+}
