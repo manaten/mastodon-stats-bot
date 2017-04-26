@@ -4,10 +4,11 @@ const {CronJob} = require('cron');
 const sqlite3 = require('sqlite3');
 const promisify = require('es6-promisify');
 const path = require('path');
+const _ = require('lodash');
 
 const db = new sqlite3.Database(path.join(__dirname, '../data.db'));
 
-// テーブルの初期化
+// initialize table
 (async () => {
   await promisify(db.run, db)(`
     CREATE TABLE IF NOT EXISTS mastodon_instances (
@@ -37,7 +38,7 @@ const getMastodonList = async () => {
   })).get();
 };
 
-const storeMastodonList = async (items) => {
+const storeMastodonList = async items => {
   for (const item of items) {
     await promisify(db.run, db)(`
       INSERT INTO mastodon_instances (
@@ -61,9 +62,17 @@ const storeMastodonList = async (items) => {
   }
 };
 
-const run = async () => {
-  const items = await getMastodonList();
-  await storeMastodonList(items.filter(item => item.users > 5000));
+const run = async robot => {
+  try {
+    const items = _.sortBy(await getMastodonList(), item => -item.users).filter(item => item.users > 5000);
+    await storeMastodonList(items);
+
+    const text = '```\ninstance  users  statuses\n' + items.map(i => `${i.instance}  ${i.users}  ${i.statuses}`).join('\n') + '\n```';
+    await robot.adapter.client.web.chat.postMessage('C0HN1A4NT', text, {as_user: true});
+    robot.logger.info(`get ${items.length} items.`);
+  } catch(e) {
+    robot.logger.error(e.message);
+  }
 };
 
 module.exports = robot => {
@@ -75,6 +84,6 @@ module.exports = robot => {
     cronTime: '00 00 0,6,12,18 * * *',
     start   : true,
     timeZone: 'Asia/Tokyo',
-    onTick  : () => run().catch(e => robot.logger.error(e.message))
+    onTick  : () => run(robot)
   });
 };
