@@ -25,6 +25,7 @@ const db = new sqlite3.Database(
     );
   `);
   await promisify(db.run, db)('CREATE INDEX IF NOT EXISTS idx_instance ON mastodon_instances (instance);');
+  await promisify(db.run, db)('CREATE INDEX IF NOT EXISTS idx_created_at ON mastodon_instances (created_at);');
 })();
 
 const getMastodonList = async () => {
