@@ -21,7 +21,7 @@ const db = new sqlite3.Database(
       statuses INTEGER DEFAULT 0 NOT NULL,
       connections INTEGER DEFAULT 0 NOT NULL,
       uptime TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      created_at INTEGER NOT NULL
     );
   `);
   await promisify(db.run, db)('CREATE INDEX IF NOT EXISTS idx_instance ON mastodon_instances (instance);');
@@ -50,9 +50,10 @@ const storeMastodonList = async items => {
         users,
         statuses,
         connections,
-        uptime
+        uptime,
+        created_at
       ) VALUES (
-        ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?
       )
     `, [
       item.instance,
@@ -60,9 +61,18 @@ const storeMastodonList = async items => {
       item.users,
       item.statuses,
       item.connections,
-      item.uptime
+      item.uptime,
+      Date.now()
     ]);
   }
+};
+
+const getCurrentStats = async () => {
+  const items = await promisify(db.all, db)(`
+    SELECT * FROM mastodon_instances
+    WHERE created_at > ?
+  `, []);
+  return items;
 };
 
 const run = async robot => {
@@ -79,8 +89,9 @@ const run = async robot => {
 };
 
 module.exports = robot => {
-  robot.respond(/mstdn-stats/, () => {
+  robot.respond(/ma?sto?do?n-stats/, async () => {
     // TODO なんかしゃべらせたいね
+    await getCurrentStats();
   });
 
   new CronJob({
