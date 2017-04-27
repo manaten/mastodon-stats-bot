@@ -5,6 +5,7 @@ const sqlite3 = require('sqlite3');
 const promisify = require('es6-promisify');
 const path = require('path');
 const _ = require('lodash');
+const Table = require('cli-table2');
 
 const db = new sqlite3.Database(
   process.env.SQLITE_PATH || path.join(__dirname, '../data.db')
@@ -67,31 +68,44 @@ const storeMastodonList = async items => {
   }
 };
 
-const getCurrentStats = async () => {
-  const items = await promisify(db.all, db)(`
+const printCurrentStats = async () => {
+  const items = (await promisify(db.all, db)(`
     SELECT * FROM mastodon_instances
     WHERE created_at > ?
-  `, []);
-  return items;
+  `, [Date.now() - 1000 * 60 * 60 * 25])).map(item => Object.assign({}, item, {created_at: item.created_at}));
+
+  const table = new Table({
+    head : ['instance', 'users', 'statuses'],
+    chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''}
+  });
+
+  const byInstance = _.keyBy(items, 'instance');
+  for (const items of _.entries(byInstance)) {
+    const max = _.maxBy(items, 'created_at');
+    const old = _.find(items, item => Math.abs(item.created_at + 24 * 60 * 60 * 1000 - max.created_at) < 60 * 60 * 1000);
+    table.push(
+      old ? [max.instance, `${max.users} ${max.users - old.users}`, `${max.statuses} ${max.statuses - old.statuses}`] : [max.instance, max.users, max.statuses]
+    );
+  }
+  return '```\n' + table.toString() + '\n```';
 };
 
 const run = async robot => {
   try {
     const items = _.sortBy(await getMastodonList(), item => -item.users).filter(item => item.users > 5000);
     await storeMastodonList(items);
-
-    const text = '```\ninstance  users  statuses\n' + items.map(i => `${i.instance}  ${i.users}  ${i.statuses}`).join('\n') + '\n```';
-    await robot.adapter.client.web.chat.postMessage(process.env.SLACK_CHANNEL, text, {as_user: true});
     robot.logger.info(`get ${items.length} items.`);
+
+    const text = await printCurrentStats();
+    await robot.adapter.client.web.chat.postMessage(process.env.SLACK_CHANNEL, text, {as_user: true});
   } catch(e) {
     robot.logger.error(e.message);
   }
 };
 
 module.exports = robot => {
-  robot.respond(/ma?sto?do?n-stats/, async () => {
-    // TODO なんかしゃべらせたいね
-    await getCurrentStats();
+  robot.respond(/ma?sto?do?n-stats/, async ctx => {
+    ctx.send(await printCurrentStats());
   });
 
   new CronJob({
