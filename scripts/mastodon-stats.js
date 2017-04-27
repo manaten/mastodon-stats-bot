@@ -68,23 +68,31 @@ const storeMastodonList = async items => {
   }
 };
 
+const formatNumber = num => num > 0 ? `+${num}` : `${num}`;
+
 const printCurrentStats = async () => {
   const items = (await promisify(db.all, db)(`
     SELECT * FROM mastodon_instances
     WHERE created_at > ?
-  `, [Date.now() - 1000 * 60 * 60 * 25])).map(item => Object.assign({}, item, {created_at: item.created_at}));
+  `, [Date.now() - 1000 * 60 * 60 * 30])).map(item => Object.assign({}, item, {created_at: item.created_at}));
 
   const table = new Table({
     head : ['instance', 'users', 'statuses'],
     chars: {'mid': '', 'left-mid': '', 'mid-mid': '', 'right-mid': ''}
   });
 
-  const byInstance = _.keyBy(items, 'instance');
-  for (const items of _.entries(byInstance)) {
+  const byInstance = _.groupBy(items, 'instance');
+  for (const items of _.values(byInstance)) {
     const max = _.maxBy(items, 'created_at');
     const old = _.find(items, item => Math.abs(item.created_at + 24 * 60 * 60 * 1000 - max.created_at) < 60 * 60 * 1000);
     table.push(
-      old ? [max.instance, `${max.users} ${max.users - old.users}`, `${max.statuses} ${max.statuses - old.statuses}`] : [max.instance, max.users, max.statuses]
+      old
+        ? [
+          max.instance,
+          `${max.users} (${formatNumber(max.users - old.users)})`,
+          `${max.statuses} (${formatNumber(max.statuses - old.statuses)})`
+        ]
+        : [max.instance, max.users, max.statuses]
     );
   }
   return '```\n' + table.toString() + '\n```';
