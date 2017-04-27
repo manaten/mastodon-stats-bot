@@ -32,12 +32,12 @@ const getMastodonList = async () => {
   const res = await axios.get('https://instances.mastodon.xyz/list');
   const $ = cheerio.load(res.data);
   return $('body > div > table > tbody > tr').map((i, tr) => ({
-    score      : Number($(tr).find('td:nth-child(2)').text()),
-    instance   : $(tr).find('td:nth-child(3)').text(),
-    users      : Number($(tr).find('td:nth-child(4)').text()),
-    statuses   : Number($(tr).find('td:nth-child(5)').text()),
-    connections: Number($(tr).find('td:nth-child(6)').text()),
-    uptime     : $(tr).find('td:nth-child(8)').text()
+    score      : Number(_.trim($(tr).find('td:nth-child(2)').text())),
+    instance   : _.trim($(tr).find('td:nth-child(3)').text()),
+    users      : Number(_.trim($(tr).find('td:nth-child(4)').text())),
+    statuses   : Number(_.trim($(tr).find('td:nth-child(5)').text())),
+    connections: Number(_.trim($(tr).find('td:nth-child(6)').text())),
+    uptime     : _.trim($(tr).find('td:nth-child(8)').text())
   })).get();
 };
 
