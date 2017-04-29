@@ -1,5 +1,4 @@
 const axios = require('axios');
-const cheerio = require('cheerio');
 const {CronJob} = require('cron');
 const sqlite3 = require('sqlite3');
 const promisify = require('es6-promisify');
@@ -30,16 +29,15 @@ const db = new sqlite3.Database(
 })();
 
 const getMastodonList = async () => {
-  const res = await axios.get('https://instances.mastodon.xyz/list');
-  const $ = cheerio.load(res.data);
-  return $('body > div > table > tbody > tr').map((i, tr) => ({
-    score      : Number(_.trim($(tr).find('td:nth-child(2)').text())),
-    instance   : _.trim($(tr).find('td:nth-child(3)').text()),
-    users      : Number(_.trim($(tr).find('td:nth-child(4)').text())),
-    statuses   : Number(_.trim($(tr).find('td:nth-child(5)').text())),
-    connections: Number(_.trim($(tr).find('td:nth-child(6)').text())),
-    uptime     : _.trim($(tr).find('td:nth-child(8)').text())
-  })).get();
+  const {data} = await axios.get('https://instances.mastodon.xyz/instances.json');
+  return data.map(item => ({
+    score      : item.https_score || 0,
+    instance   : item.name,
+    users      : item.users,
+    statuses   : item.statuses,
+    connections: item.connections,
+    uptime     : item.uptime
+  }));
 };
 
 const storeMastodonList = async items => {
@@ -114,6 +112,10 @@ const run = async robot => {
 module.exports = robot => {
   robot.respond(/ma?sto?do?n-stats/, async ctx => {
     ctx.send(await printCurrentStats());
+  });
+
+  robot.respond(/fetch/, async () => {
+    await run(robot);
   });
 
   new CronJob({

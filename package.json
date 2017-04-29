@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "axios": "^0.16.1",
-    "cheerio": "^0.22.0",
     "cli-table2": "^0.2.0",
     "coffee-script": "^1.12.5",
     "cron": "^1.2.1",
