@@ -30,6 +30,9 @@ const db = new sqlite3.Database(
 
 const getMastodonList = async () => {
   const {data} = await axios.get('https://instances.mastodon.xyz/instances.json');
+  if (!data.length || data.length === 0) {
+    throw new Error('items is empty!');
+  }
   return data.map(item => ({
     score      : item.https_score || 0,
     instance   : item.name,
@@ -106,6 +109,8 @@ const run = async robot => {
     await robot.adapter.client.web.chat.postMessage(process.env.SLACK_CHANNEL, text, {as_user: true});
   } catch(e) {
     robot.logger.error(e.message);
+    const im = await robot.adapter.client.web.im.open(process.env.ERROR_SEND_USER_ID);
+    await robot.adapter.client.web.chat.postMessage(im.channel.id, e.message, {as_user: true});
   }
 };
 
