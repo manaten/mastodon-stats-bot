@@ -5,6 +5,7 @@ const promisify = require('es6-promisify');
 const path = require('path');
 const _ = require('lodash');
 const Table = require('cli-table2');
+const moment = require('moment-timezone');
 
 const db = new sqlite3.Database(
   process.env.SQLITE_PATH || path.join(__dirname, '../data.db')
@@ -72,10 +73,10 @@ const storeMastodonList = async items => {
 const formatNumber = num => num > 0 ? `+${num}` : `${num}`;
 
 const printCurrentStats = async () => {
-  const items = (await promisify(db.all, db)(`
+  const items = await promisify(db.all, db)(`
     SELECT * FROM mastodon_instances
     WHERE created_at > ?
-  `, [Date.now() - 1000 * 60 * 60 * 30])).map(item => Object.assign({}, item, {created_at: item.created_at}));
+  `, [Date.now() - 1000 * 60 * 60 * 30]);
 
   const table = new Table({
     head : ['instance', 'users', 'statuses'],
@@ -99,6 +100,17 @@ const printCurrentStats = async () => {
   return '```\n' + table.toString() + '\n```';
 };
 
+const getAllDataAsCsv = async () => {
+  const items = await promisify(db.all, db)(`
+    SELECT * FROM mastodon_instances
+  `, []);
+
+  return 'instance,score,users,statuses,connections,uptime,created_at\n'
+    + items.map(item =>
+      `${item.instance},${item.score},${item.users},${item.statuses},${item.connections},${_.trim(item.uptime)},${moment(item.created_at).tz('Asia/Tokyo').format('YYYY/MM/DD HH:mm:ss')}`
+    ).join('\n');
+};
+
 const run = async robot => {
   try {
     const items = _.sortBy(await getMastodonList(), item => -item.users).filter(item => item.users > 5000);
@@ -115,6 +127,16 @@ const run = async robot => {
 };
 
 module.exports = robot => {
+  robot.respond(/ma?sto?do?n-stats-csv/, async ctx => {
+    ctx.finish();
+    const csv = await getAllDataAsCsv();
+    await robot.adapter.client.web.files.upload(`mastodon-stats-${moment().tz('Asia/Tokyo').format('YYYYMMDDHH')}.csv`, {
+      channels: ctx.envelope.room,
+      content: csv,
+      filetype: 'csv'
+    });
+  });
+
   robot.respond(/ma?sto?do?n-stats/, async ctx => {
     ctx.send(await printCurrentStats());
   });
