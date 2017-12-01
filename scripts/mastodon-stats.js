@@ -128,17 +128,25 @@ const run = async robot => {
 
 module.exports = robot => {
   robot.respond(/ma?sto?do?n-stats-csv/, async ctx => {
-    ctx.finish();
-    const csv = await getAllDataAsCsv();
-    await robot.adapter.client.web.files.upload(`mastodon-stats-${moment().tz('Asia/Tokyo').format('YYYYMMDDHH')}.csv`, {
-      channels: ctx.envelope.room,
-      content: csv,
-      filetype: 'csv'
-    });
+    try {
+      ctx.finish();
+      const csv = await getAllDataAsCsv();
+      await robot.adapter.client.web.files.upload(`mastodon-stats-${moment().tz('Asia/Tokyo').format('YYYYMMDDHH')}.csv`, {
+        channels: ctx.envelope.room,
+        content: csv,
+        filetype: 'csv'
+      });
+    } catch (e) {
+      robot.logger.error(e);
+    }
   });
 
   robot.respond(/ma?sto?do?n-stats/, async ctx => {
-    ctx.send(await printCurrentStats());
+    try {
+      ctx.send(await printCurrentStats());
+    } catch(e) {
+      robot.logger.error(e);
+    }
   });
 
   robot.respond(/fetch/, async () => {
