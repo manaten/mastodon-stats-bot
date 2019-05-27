@@ -121,8 +121,8 @@ const run = async robot => {
     await robot.adapter.client.web.chat.postMessage(process.env.SLACK_CHANNEL, text, {as_user: true});
   } catch(e) {
     robot.logger.error(e.message);
-    const im = await robot.adapter.client.web.im.open(process.env.ERROR_SEND_USER_ID);
-    await robot.adapter.client.web.chat.postMessage(im.channel.id, e.message, {as_user: true});
+    // const im = await robot.adapter.client.web.im.open(process.env.ERROR_SEND_USER_ID);
+    // await robot.adapter.client.web.chat.postMessage(im.channel.id, e.message, {as_user: true});
   }
 };
 
