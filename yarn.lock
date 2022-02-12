@@ -800,7 +800,7 @@ date-fns@^1.27.2:
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-1.28.3.tgz#145d87adc3f5a82c6bda668de97eee1132c97ea1"
   integrity sha1-FF2HrcP1qCxr2maN6X7uETLJfqE=
 
-debug@2, debug@2.6.9, debug@^2.1.1, debug@^2.1.2, debug@^2.2.0, debug@^2.4.5:
+debug@2, debug@2.6.9, debug@^2.1.1, debug@^2.1.2, debug@^2.2.0:
   version "2.6.9"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.9.tgz#5d128515df134ff327e90a4c93f4e077a536341f"
   integrity sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==
@@ -1369,11 +1369,9 @@ fobject@0.0.3:
     when "^3.0.1"
 
 follow-redirects@^1.2.3:
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.2.3.tgz#01abaeca85e3609837d9fcda3167a7e42fdaca21"
-  integrity sha1-AauuyoXjYJg32fzaMWen5C/ayiE=
-  dependencies:
-    debug "^2.4.5"
+  version "1.14.8"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.8.tgz#016996fb9a11a100566398b1c6839337d7bfa8fc"
+  integrity sha512-1x0S9UVJHsQprFcEC/qnNzBLcIxsjAV905f/UkQxbclCsoTWlacCNOpQa/anodLl2uaEKFhfWOvM2Qg77+15zA==
 
 for-in@^1.0.1:
   version "1.0.2"
